@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
     <title>Happy Days</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
@@ -26,14 +27,9 @@
     </nav>
 
     <table id="forecastView" class="table table-striped">
-
-    </table>
-    
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+      </table>
 
     <script>
-      // We removed the require() statement here because the browser uses the CDN import above.
-
       class Location {
           constructor(name, lat, lon) {
               this.name = name;
@@ -74,11 +70,11 @@
 
         let days = [];
         let forecastLocations = [];
-        let phrases = {}; // [day][hour][locationIndex] == phrase
-        let temperatures = {}; // [day][hour][locationIndex] = temp
-        let feelsLike = {}; // [day][hour][locationIndex] = temp
-        let iconCodes = {}; // [day][hour][locationIndex] = code
-        let hoursInDay = {}; // [day] = [hours]
+        let phrases = {}; 
+        let temperatures = {}; 
+        let feelsLike = {}; 
+        let iconCodes = {}; 
+        let hoursInDay = {}; 
 
         for (let i = 0; i < weatherForecastData.length && i < LOCATIONS.length; i++) {
           let forecasts = weatherForecastData[i].forecasts;
@@ -143,7 +139,6 @@
             let hour = hoursInDay[date][iHour];
 
             if (iHour > 0) {
-              // not using the same row as the date
               html.push('<tr>');
             }
 
@@ -170,7 +165,6 @@
 
         html.push('</tbody>');
         let htmlStr = html.join('');
-        console.log(htmlStr);
 
         const table = document.getElementById('forecastView');
         table.innerHTML = htmlStr;
@@ -180,25 +174,29 @@
         const loc = LOCATIONS[locationIndex];
         console.log(loc.name, '-- Loading 240hr weather');
 
-        const url =
-          'https://api.weather.com/v1/geocode/' +
-          loc.lat + '/' + loc.lon +
-          '/forecast/hourly/240hour.json?apiKey=6532d6454b8aa370768e63d6ba5a832e&units=e';
+        const url = `https://api.weather.com/v1/geocode/${loc.lat}/${loc.lon}/forecast/hourly/240hour.json?apiKey=6532d6454b8aa370768e63d6ba5a832e&units=e`;
 
-        // Using the global lowercase 'axios' provided by the CDN
-        axios.get(url)
+        // Using the native fetch API instead of Axios
+        fetch(url)
           .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json(); // Parses the JSON response
+          })
+          .then(data => {
             console.log(loc.name, '-- 240hr loaded');
             
-            weatherForecastData.push(response.data);
+            weatherForecastData.push(data);
             processWeatherForecasts();
 
+            // Load the next location
             if (locationIndex < LOCATIONS.length - 1) {
               setTimeout(() => load240hrWeather(locationIndex + 1), 500);
             }
           })
           .catch(error => {
-            console.log(loc.name, '-- 240hr weather for failed:', error);
+            console.error(loc.name, '-- 240hr weather failed:', error);
           });
       }
 
